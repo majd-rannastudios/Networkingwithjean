@@ -1,0 +1,523 @@
+import crypto from 'node:crypto';
+import { assignRound, describe, pairKey, placeLatecomer, planGroups } from './assign.js';
+import {
+  DEFAULT_COLOR_COUNT,
+  DEFAULT_ROUND_MINUTES,
+  PALETTE,
+  QUESTIONS
+} from './config.js';
+import { save } from './store.js';
+
+// ---------------------------------------------------------------------------
+// The live event.
+//
+// One event at a time, held in memory, snapshotted to the store. Everything
+// the phones and the operator console read is derived from this.
+// ---------------------------------------------------------------------------
+
+const listeners = new Set();
+
+export const event = {
+  name: 'Networking',
+  status: 'setup',            // setup -> running -> (paused) -> ended
+  colorCount: DEFAULT_COLOR_COUNT,
+  roundMinutes: DEFAULT_ROUND_MINUTES,
+  huddleSize: 6,
+  useHuddles: true,
+  // Icebreaker prompts are off unless the host switches them on. Left to
+  // themselves people introduce themselves fine; a prompt on every screen can
+  // make the room feel scripted. The host decides, live.
+  showQuestions: false,
+  roundIndex: 0,              // 0 = not started yet; first round is 1
+  roundStartedAt: null,
+  roundEndsAt: null,
+  pausedRemainingMs: null,
+  // A guest silent for this long across rounds stops being counted. Generous
+  // on purpose: phones go in pockets and mobile browsers throttle timers, and
+  // dropping someone who is standing right there is worse than counting a
+  // straggler who left.
+  absentAfterMinutes: 25
+};
+
+/** id -> guest */
+export const participants = new Map();
+/** token -> id */
+const tokens = new Map();
+/** pairKey -> rounds shared */
+export const meetings = new Map();
+
+/** The round on the floor right now. */
+export let round = null;
+
+// --- guests ----------------------------------------------------------------
+
+const normaliseCompany = value =>
+  (value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() || null;
+
+export function join({ name, company, role }) {
+  const id = crypto.randomBytes(6).toString('hex');
+  const token = crypto.randomBytes(24).toString('hex');
+  const guest = {
+    id,
+    token,
+    name: (name || '').trim().slice(0, 60) || 'Guest',
+    company: (company || '').trim().slice(0, 80),
+    role: (role || '').trim().slice(0, 80),
+    companyKey: normaliseCompany(company),
+    joinedAt: Date.now(),
+    lastSeen: Date.now(),
+    metCount: 0,       // distinct people talked with so far
+    color: null,       // colour index for the current round
+    group: null,       // huddle index for the current round
+    history: []        // colour index per round played
+  };
+  participants.set(id, guest);
+  tokens.set(token, id);
+
+  // Someone who arrives mid-round should not have to wait ten minutes to be
+  // part of the night. Seat them straight away.
+  if (event.status === 'running' && round) seatLatecomer(guest);
+
+  persist();
+  broadcast();
+  return guest;
+}
+
+export function bytoken(token) {
+  const id = tokens.get(token);
+  return id ? participants.get(id) : null;
+}
+
+export function touch(token) {
+  const guest = bytoken(token);
+  if (guest) guest.lastSeen = Date.now();
+  return guest;
+}
+
+export function removeGuest(id) {
+  const guest = participants.get(id);
+  if (!guest) return false;
+  tokens.delete(guest.token);
+  participants.delete(id);
+  if (round) round.groups.forEach(g => {
+    const at = g.indexOf(id);
+    if (at >= 0) g.splice(at, 1);
+  });
+  persist();
+  broadcast();
+  return true;
+}
+
+/**
+ * Note that two guests have shared a group. Distinct-people counts are kept
+ * incrementally: recomputing them meant scanning every pair for every guest on
+ * every broadcast, which is fine for forty people and not for four hundred.
+ */
+function recordMeeting(aId, bId) {
+  const key = pairKey(aId, bId);
+  const seen = meetings.get(key) || 0;
+  meetings.set(key, seen + 1);
+  if (seen === 0) {
+    const a = participants.get(aId);
+    const b = participants.get(bId);
+    if (a) a.metCount = (a.metCount || 0) + 1;
+    if (b) b.metCount = (b.metCount || 0) + 1;
+  }
+}
+
+/** Guests we still believe are in the room. */
+export function activeGuests() {
+  const cutoff = Date.now() - event.absentAfterMinutes * 60_000;
+  return [...participants.values()].filter(g => g.lastSeen >= cutoff);
+}
+
+// --- rounds ----------------------------------------------------------------
+
+function seatLatecomer(guest) {
+  const groupIds = round.groups;
+  const groups = groupIds.map(ids => ids.map(id => participants.get(id)).filter(Boolean));
+  const g = placeLatecomer(
+    { id: guest.id, companyKey: guest.companyKey, lastColor: null },
+    groups,
+    meetings,
+    round.groupColor
+  );
+  groupIds[g].push(guest.id);
+  guest.group = g;
+  guest.color = round.groupColor[g];
+  // They have now met everyone already standing there.
+  for (const other of groups[g]) {
+    if (other.id === guest.id) continue;
+    recordMeeting(guest.id, other.id);
+  }
+}
+
+/**
+ * Cut the room for the next round and put it on the floor.
+ * The wheel on each phone is theatre: the answer is decided here, first.
+ */
+export function nextRound() {
+  const roster = activeGuests();
+  const colorCount = Math.min(event.colorCount, PALETTE.length);
+
+  const plan = event.useHuddles
+    ? planGroups(Math.max(roster.length, colorCount), colorCount, event.huddleSize)
+    : { groupCount: colorCount, groupColor: Int32Array.from({ length: colorCount }, (_, i) => i), huddlesPerColor: 1 };
+
+  // Budget scales with the room but stays short enough that the rotation feels
+  // instant on the floor.
+  const budgetMs = Math.min(1200, 250 + roster.length * 3);
+
+  const { groups, stats, ms } = assignRound(
+    roster.map(g => ({ id: g.id, companyKey: g.companyKey, lastColor: g.color })),
+    plan.groupCount,
+    meetings,
+    {
+      roundIndex: event.roundIndex,
+      budgetMs,
+      seed: Date.now(),
+      groupColor: plan.groupColor
+    }
+  );
+
+  event.roundIndex += 1;
+  event.roundStartedAt = Date.now();
+  event.roundEndsAt = event.roundStartedAt + event.roundMinutes * 60_000;
+  event.pausedRemainingMs = null;
+
+  round = {
+    index: event.roundIndex,
+    groups: groups.map(g => g.map(p => p.id)),
+    groupColor: Array.from(plan.groupColor),
+    huddlesPerColor: plan.huddlesPerColor,
+    stats,
+    computedMs: ms
+  };
+
+  // Commit: everyone in a huddle has now met everyone else in it.
+  groups.forEach((group, gi) => {
+    const color = plan.groupColor[gi];
+    for (let i = 0; i < group.length; i++) {
+      const a = participants.get(group[i].id);
+      if (!a) continue;
+      a.color = color;
+      a.group = gi;
+      a.history.push(color);
+      for (let j = i + 1; j < group.length; j++) {
+        recordMeeting(group[i].id, group[j].id);
+      }
+    }
+  });
+
+  console.log(
+    `[round ${round.index}] ${stats.people} guests, ${plan.groupCount} huddles across ${colorCount} colours, ` +
+    `${stats.repeats} repeat pairs, ${stats.colleaguePairs} colleague pairs, ${ms}ms`
+  );
+
+  persist();
+  broadcast();
+  return round;
+}
+
+export function start() {
+  if (event.status === 'running') return round;
+  event.status = 'running';
+  return nextRound();
+}
+
+export function pause() {
+  if (event.status !== 'running') return;
+  event.status = 'paused';
+  event.pausedRemainingMs = Math.max(0, event.roundEndsAt - Date.now());
+  persist();
+  broadcast();
+}
+
+export function resume() {
+  if (event.status !== 'paused') return;
+  event.status = 'running';
+  event.roundEndsAt = Date.now() + (event.pausedRemainingMs ?? event.roundMinutes * 60_000);
+  event.pausedRemainingMs = null;
+  persist();
+  broadcast();
+}
+
+/** Add or remove time from the round in progress. */
+export function nudgeRound(deltaMs) {
+  if (!event.roundEndsAt) return;
+  if (event.status === 'paused') {
+    event.pausedRemainingMs = Math.max(5000, (event.pausedRemainingMs ?? 0) + deltaMs);
+  } else {
+    event.roundEndsAt = Math.max(Date.now() + 5000, event.roundEndsAt + deltaMs);
+  }
+  persist();
+  broadcast();
+}
+
+export function endEvent() {
+  event.status = 'ended';
+  event.roundEndsAt = null;
+  persist();
+  broadcast();
+}
+
+export function resetEvent() {
+  participants.clear();
+  tokens.clear();
+  meetings.clear();
+  round = null;
+  event.status = 'setup';
+  event.roundIndex = 0;
+  event.roundStartedAt = null;
+  event.roundEndsAt = null;
+  event.pausedRemainingMs = null;
+  persist();
+  broadcast();
+}
+
+export function configure(patch) {
+  if (patch.name !== undefined) event.name = String(patch.name).slice(0, 80);
+  if (patch.colorCount !== undefined) {
+    event.colorCount = clamp(Math.round(patch.colorCount), 2, PALETTE.length);
+  }
+  if (patch.roundMinutes !== undefined) {
+    event.roundMinutes = clamp(Number(patch.roundMinutes), 1, 60);
+  }
+  if (patch.huddleSize !== undefined) {
+    event.huddleSize = clamp(Math.round(patch.huddleSize), 2, 20);
+  }
+  if (patch.useHuddles !== undefined) event.useHuddles = !!patch.useHuddles;
+  if (patch.showQuestions !== undefined) event.showQuestions = !!patch.showQuestions;
+  if (patch.absentAfterMinutes !== undefined) {
+    event.absentAfterMinutes = clamp(Number(patch.absentAfterMinutes), 2, 240);
+  }
+  persist();
+  broadcast();
+  return event;
+}
+
+/** Called every second by the server clock. */
+export function tick() {
+  if (event.status !== 'running' || !event.roundEndsAt) return false;
+  if (Date.now() < event.roundEndsAt) return false;
+  nextRound();
+  return true;
+}
+
+// --- views -----------------------------------------------------------------
+
+export function colors() {
+  return PALETTE.slice(0, Math.min(event.colorCount, PALETTE.length));
+}
+
+function questionFor(roundIndex, groupIndex) {
+  // Same prompt for everyone in a huddle, different prompt per huddle, and a
+  // fresh one every round.
+  return QUESTIONS[(roundIndex * 7 + groupIndex * 3) % QUESTIONS.length];
+}
+
+/** What one guest's phone shows right now. */
+export function guestView(guest) {
+  const palette = colors();
+  const base = {
+    event: {
+      name: event.name,
+      status: event.status,
+      roundIndex: event.roundIndex,
+      roundEndsAt: event.status === 'paused' ? null : event.roundEndsAt,
+      pausedRemainingMs: event.pausedRemainingMs,
+      roundMinutes: event.roundMinutes
+    },
+    colors: palette,
+    me: {
+      id: guest.id,
+      name: guest.name,
+      company: guest.company,
+      role: guest.role,
+      rounds: guest.history.length
+    }
+  };
+
+  if (event.status !== 'running' || !round || guest.color === null) {
+    return { ...base, assignment: null, metCount: metCountFor(guest.id) };
+  }
+
+  const groupIds = round.groups[guest.group] || [];
+  const huddle = groupIds
+    .filter(id => id !== guest.id)
+    .map(id => participants.get(id))
+    .filter(Boolean)
+    .map(p => ({ name: p.name, company: p.company, role: p.role }));
+
+  // Which huddle within the colour, counting from 1, for calling out loud.
+  const siblings = round.groupColor
+    .map((c, gi) => ({ c, gi }))
+    .filter(x => x.c === guest.color)
+    .map(x => x.gi);
+
+  return {
+    ...base,
+    assignment: {
+      colorIndex: guest.color,
+      color: palette[guest.color],
+      huddleNumber: siblings.indexOf(guest.group) + 1,
+      huddleCount: siblings.length,
+      question: event.showQuestions ? questionFor(round.index, guest.group) : null,
+      huddle
+    },
+    metCount: metCountFor(guest.id)
+  };
+}
+
+function metCountFor(id) {
+  return participants.get(id)?.metCount ?? 0;
+}
+
+/** Counts per colour, for the projector screen and the operator console. */
+export function colorTotals() {
+  const palette = colors();
+  const totals = palette.map((c, i) => ({ ...c, index: i, count: 0, huddles: 0 }));
+  if (!round) return totals;
+  round.groups.forEach((ids, gi) => {
+    const color = round.groupColor[gi];
+    if (!totals[color]) return;
+    totals[color].count += ids.length;
+    if (ids.length) totals[color].huddles += 1;
+  });
+  return totals;
+}
+
+export function adminView() {
+  const active = activeGuests();
+  const distinct = meetings.size;
+  const repeatPairs = [...meetings.values()].filter(v => v > 1).length;
+
+  return {
+    event: { ...event },
+    store: { participants: participants.size, active: active.length },
+    round: round
+      ? {
+          index: round.index,
+          stats: round.stats,
+          computedMs: round.computedMs,
+          huddlesPerColor: round.huddlesPerColor
+        }
+      : null,
+    colors: colorTotals(),
+    quality: {
+      distinctPairs: distinct,
+      repeatPairs,
+      // Average number of people each guest has actually talked with.
+      avgMet: participants.size ? (2 * distinct) / participants.size : 0
+    },
+    guests: [...participants.values()]
+      .sort((a, b) => b.joinedAt - a.joinedAt)
+      .map(g => ({
+        id: g.id,
+        name: g.name,
+        company: g.company,
+        role: g.role,
+        color: g.color,
+        rounds: g.history.length,
+        active: g.lastSeen >= Date.now() - event.absentAfterMinutes * 60_000,
+        lastSeen: g.lastSeen
+      }))
+  };
+}
+
+export function screenView() {
+  return {
+    event: {
+      name: event.name,
+      status: event.status,
+      roundIndex: event.roundIndex,
+      roundEndsAt: event.status === 'paused' ? null : event.roundEndsAt,
+      pausedRemainingMs: event.pausedRemainingMs
+    },
+    colors: colorTotals(),
+    guests: participants.size
+  };
+}
+
+/** Post-event export for the client. */
+export function exportCsv() {
+  const rows = [['name', 'company', 'role', 'joined_at', 'rounds_played', 'people_met', 'colours']];
+  for (const g of participants.values()) {
+    rows.push([
+      g.name,
+      g.company,
+      g.role,
+      new Date(g.joinedAt).toISOString(),
+      g.history.length,
+      metCountFor(g.id),
+      g.history.map(i => PALETTE[i]?.name ?? i).join(' > ')
+    ]);
+  }
+  return rows
+    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+}
+
+// --- plumbing --------------------------------------------------------------
+
+export function onChange(fn) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
+export function broadcast() {
+  for (const fn of listeners) {
+    try { fn(); } catch (err) { console.error('[broadcast]', err.message); }
+  }
+}
+
+function snapshot() {
+  return {
+    version: 1,
+    event,
+    round,
+    participants: [...participants.values()],
+    meetings: [...meetings.entries()]
+  };
+}
+
+export function persist() {
+  save(snapshot());
+}
+
+export function hydrate(data) {
+  if (!data || data.version !== 1) return false;
+  Object.assign(event, data.event || {});
+  round = data.round || null;
+  participants.clear();
+  tokens.clear();
+  meetings.clear();
+  for (const g of data.participants || []) {
+    participants.set(g.id, g);
+    tokens.set(g.token, g.id);
+  }
+  for (const [key, count] of data.meetings || []) meetings.set(key, count);
+
+  // Rebuild the per-guest counters from the pair log, so a snapshot taken
+  // before this counter existed still restores correctly.
+  for (const g of participants.values()) g.metCount = 0;
+  for (const key of meetings.keys()) {
+    const sep = key.indexOf('|');
+    const a = participants.get(key.slice(0, sep));
+    const b = participants.get(key.slice(sep + 1));
+    if (a) a.metCount++;
+    if (b) b.metCount++;
+  }
+
+  // A restart must not silently swallow round time that already elapsed.
+  if (event.status === 'running' && event.roundEndsAt && event.roundEndsAt < Date.now()) {
+    console.log('[hydrate] round expired while we were down - rotating');
+    nextRound();
+  }
+  console.log(`[hydrate] ${participants.size} guests, round ${event.roundIndex}, status ${event.status}`);
+  return true;
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, Number.isFinite(value) ? value : min));
+}

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0E0E10">
+<title>Spin The Wheel — Colors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- 1. join -->
+  <section class="screen on" id="screen-join">
+    <div class="brand">Ranna Studios</div>
+    <h1 class="hero-title">Spin The Wheel<span>Colors</span></h1>
+    <p class="hero-sub">Spin for a colour, walk to that circle, and meet the people waiting there. New colour every few minutes.</p>
+
+    <form id="join-form">
+      <div class="field">
+        <label for="f-name">Your name</label>
+        <input id="f-name" name="name" autocomplete="given-name" required maxlength="60" placeholder="e.g. Sara">
+      </div>
+      <div class="field">
+        <label for="f-company">Company</label>
+        <input id="f-company" name="company" autocomplete="organization" maxlength="80" placeholder="e.g. Ranna Studios">
+      </div>
+      <div class="field">
+        <label for="f-role">Role <span class="muted">(optional)</span></label>
+        <input id="f-role" name="role" autocomplete="organization-title" maxlength="80" placeholder="e.g. Creative Director">
+      </div>
+      <button class="block" type="submit" id="join-btn">Join the room</button>
+      <p class="consent">We use your company only to seat you away from your own colleagues, and to show your name to the small group you are matched with. Nothing is shared beyond this event.</p>
+    </form>
+  </section>
+
+  <!-- 2. wheel -->
+  <section class="screen" id="screen-wheel">
+    <div class="brand">Ranna Studios</div>
+    <div class="wheel-stage">
+      <div class="eyebrow" id="wheel-eyebrow">Round 1</div>
+      <div class="wheel-holder">
+        <div class="pointer"></div>
+        <svg class="wheel" id="wheel" viewBox="0 0 200 200" aria-hidden="true"></svg>
+        <div class="wheel-hub">SPIN</div>
+      </div>
+      <button id="spin-btn" class="pulse">Tap to spin</button>
+      <p class="tap-hint" id="wheel-hint">Your colour is waiting.</p>
+    </div>
+  </section>
+
+  <!-- 3. result -->
+  <section class="screen" id="screen-result">
+    <div class="brand">Ranna Studios</div>
+
+    <div class="result-color" id="result-color">
+      <div class="result-label">Go to the</div>
+      <div class="result-name" id="result-name">Orange</div>
+      <div class="result-huddle" id="result-huddle">circle</div>
+    </div>
+
+    <div class="timer-row">
+      <div>
+        <div class="eyebrow" id="round-label">Round 1</div>
+        <div class="muted" style="font-size:13px">until you move again</div>
+      </div>
+      <div class="timer" id="timer">10:00</div>
+    </div>
+    <div class="bar"><i id="bar" style="width:100%"></i></div>
+
+    <div class="question" id="question">Loading…</div>
+
+    <div id="people-block">
+      <div class="eyebrow" style="margin-top:20px">Your group</div>
+      <ul class="people" id="people"></ul>
+    </div>
+
+    <div class="stat-strip">
+      <div class="stat"><b id="stat-met">0</b><span>people met</span></div>
+      <div class="stat"><b id="stat-rounds">0</b><span>rounds</span></div>
+    </div>
+
+    <p class="notice" id="result-notice"></p>
+  </section>
+
+  <!-- 4. waiting / ended -->
+  <section class="screen" id="screen-wait">
+    <div class="brand">Ranna Studios</div>
+    <div class="wheel-stage">
+      <h2 id="wait-title" style="font-size:30px">You are in</h2>
+      <p class="muted center" id="wait-text" style="max-width:26ch">Hold tight — the first spin starts when the host kicks things off.</p>
+      <div class="stat-strip" style="width:100%">
+        <div class="stat"><b id="wait-met">0</b><span>people met</span></div>
+        <div class="stat"><b id="wait-rounds">0</b><span>rounds</span></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- round change -->
+<div class="overlay" id="overlay">
+  <h2>Time to move</h2>
+  <p>New colour, new people. Tap to see where you are going.</p>
+  <button id="overlay-btn">Spin again</button>
+</div>
+
+<div class="offline" id="offline">Reconnecting…</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
