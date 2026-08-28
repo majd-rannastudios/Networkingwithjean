@@ -113,6 +113,19 @@ app.get('/api/admin/qr', requireAdmin, async (req, res) => {
 
 app.get('/api/palette', (_req, res) => res.json(PALETTE));
 
+// Railway healthcheck. Reports the store too, so a deploy that silently fell
+// back to file storage is visible instead of being discovered mid-event.
+app.get('/health', (_req, res) => {
+  res.json({
+    ok: true,
+    store: store.driverName(),
+    status: state.event.status,
+    round: state.event.roundIndex,
+    guests: state.participants.size,
+    uptime: Math.round(process.uptime())
+  });
+});
+
 // --- pages -----------------------------------------------------------------
 
 const page = file => (_req, res) => res.sendFile(path.join(__dirname, '..', 'public', file));

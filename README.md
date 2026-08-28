@@ -82,16 +82,31 @@ minute, pause, and export a CSV of everyone who attended.
 - **A restart mid-event loses nothing.** State is snapshotted continuously; if a
   round expired while the server was down, it rotates on boot.
 
-## Deploying to Railway
+## Railway
 
-```bash
-railway up
-```
+Project `spin-the-wheel-colors`, production environment, two services:
 
-Set `ADMIN_PIN` and `PUBLIC_URL` (the domain printed on the QR standee). Add a
-Postgres service and `DATABASE_URL` is injected automatically — without it the
-app falls back to a local JSON file, which is fine for a demo but not for a
-container that can be rescheduled mid-event.
+| Service | What |
+|---|---|
+| `app` | this repo, exposed at the public domain |
+| `Postgres` | `postgres:16-alpine` on a persistent volume at `/var/lib/postgresql/data` |
+
+Variables already set on `app`:
+
+- `DATABASE_URL` — points at Postgres over Railway's private network
+- `ADMIN_PIN` — the operator console PIN
+- `PUBLIC_URL` — the domain the QR code encodes
+- `NODE_ENV=production`
+
+`/health` reports which store won, so a deploy that quietly fell back to file
+storage is visible before an event rather than during one.
+
+### Keep it to one replica
+
+The live event lives in memory and is snapshotted to Postgres. Two replicas
+would each hold their own copy of the room and hand out contradictory colours,
+so `numReplicas` is pinned to 1 in `railway.json`. Scaling this app means
+moving round state into Postgres proper, not adding instances.
 
 ## Layout
 
