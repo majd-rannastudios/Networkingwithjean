@@ -116,9 +116,13 @@ app.get('/api/palette', (_req, res) => res.json(PALETTE));
 // Railway healthcheck. Reports the store too, so a deploy that silently fell
 // back to file storage is visible instead of being discovered mid-event.
 app.get('/health', (_req, res) => {
-  res.json({
-    ok: true,
+  const degraded = store.isDegraded();
+  res.status(degraded ? 503 : 200).json({
+    ok: !degraded,
     store: store.driverName(),
+    warning: degraded
+      ? 'DATABASE_URL is set but Postgres is not connected - state will not survive a redeploy'
+      : undefined,
     status: state.event.status,
     round: state.event.roundIndex,
     guests: state.participants.size,
