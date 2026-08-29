@@ -83,7 +83,8 @@ h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -0.0
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
 /* The lockup stacks "Ranna / Studios" beside the mark, so it needs a little
-   more height than a single-line wordmark to stay readable. */
+   more height than a single-line wordmark to stay readable. Phone default;
+   the console and the projector scale it up for their viewing distance. */
 .brand-logo { display: flex; align-items: center; height: 32px; }
 .brand-logo img { height: 100%; width: auto; display: block; }
 /* Until the real asset is dropped in, a wordmark stands in. */
