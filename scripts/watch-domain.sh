@@ -5,7 +5,7 @@ HOST=networking.rannastudios.com
 TARGET=enkxfnja.up.railway.app
 START=$(date +%s)
 
-for i in $(seq 1 80); do
+for i in $(seq 1 144); do
   IP=$(nslookup "$TARGET" 8.8.8.8 2>/dev/null | awk '/^Address:/{print $2}' | tail -1)
   PUBLIC_DNS=$(nslookup -type=CNAME "$HOST" 8.8.8.8 2>/dev/null | grep -ci "canonical name")
 
@@ -28,8 +28,8 @@ for i in $(seq 1 80); do
       exit 0
     fi
   fi
-  sleep 90
+  sleep 300
 done
 
-echo "Still not serving after 2 hours — worth checking the Railway dashboard."
+echo "Still not serving after 12 hours. Railway docs allow up to 72h; past that it is a support ticket."
 exit 1

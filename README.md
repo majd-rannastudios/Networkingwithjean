@@ -159,6 +159,32 @@ Variables already set on `app`:
 `/health` reports which store won, so a deploy that quietly fell back to file
 storage is visible before an event rather than during one.
 
+### The custom domain needs TWO DNS records, not one
+
+Live at `networking.rannastudios.com`, on GoDaddy DNS:
+
+| Type | Name | Value |
+|---|---|---|
+| `CNAME` | `networking` | `enkxfnja.up.railway.app` |
+| `TXT` | `_railway-verify.networking` | `railway-verify=442ac327…` (from the Railway dashboard) |
+
+The CNAME routes traffic; the **TXT proves ownership**. With only the CNAME in
+place the domain never verifies, no certificate is issued, and Railway's edge
+answers every request with its own **404 "the train has not arrived at the
+station"** page — which looks like a routing bug and is not one.
+
+Worth knowing because the API hides it: `domain-status` lists only the CNAME in
+`dnsRecords` and reports it `PROPAGATED`, so everything reads as correct while
+the domain sits at `VALIDATING_OWNERSHIP` with a null error. The TXT token lives
+in `status.verificationToken`, which that endpoint does not return — the Railway
+dashboard is the only place to read it.
+
+If a certificate ever stalls again: **do not delete and re-add the domain.**
+Let's Encrypt rate-limits 5 duplicate certificates per domain per week, and a
+re-add can hand back a different CNAME target, meaning a new DNS record and a
+fresh propagation wait. `railway domain` in the CLI has a retry that re-triggers
+validation without any of that.
+
 ### Keep it to one replica
 
 The live event lives in memory and is snapshotted to Postgres. Two replicas
