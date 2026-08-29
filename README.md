@@ -47,44 +47,47 @@ pairings by pigeonhole from round two — no matching algorithm can fix it. That
 is why a colour is split into **huddles**: the colour tells a guest where to
 walk, and their phone names the 5–6 people they are actually talking to.
 
-Eight colours × four huddles = thirty-two groups, which puts the room back under
+Six colours × eight huddles = forty-eight groups, which puts the room back under
 the limit. `planGroups()` picks the huddle count automatically and will never
 choose a shape that violates the rule. A 22-person circle was never a
 conversation anyway.
 
+This is also why capping the palette at six brand colours costs nothing: the
+planner compensates with more huddles per circle. Fewer colours, same result.
+
 ### Measured
 
-`npm run load` — 300 guests, 10 colours, 10 rounds:
+`npm run load` — 300 guests, 6 colours, 10 rounds:
 
 ```
-round  1: matched 1150ms | 300 phones in 133ms | repeats 0 | colleagues 0 | circle spread 0
+round  1: matched 1150ms | 300 phones in 142ms | repeats 0 | colleagues 0 | circle spread 0
 ...
-round 10: matched 1150ms | 300 phones in  54ms | repeats 0 | colleagues 0 | circle spread 0
+round 10: matched 1150ms | 300 phones in  60ms | repeats 0 | colleagues 0 | circle spread 0
 
-avg distinct people met: 50.0 | repeat pairs across the whole event: 0
+avg distinct people met: 52.8 | repeat pairs across the whole event: 0
 ```
 
 `npm run simulate` compares huddles against whole-circle matching on a synthetic
-room. `GUESTS=180 COLORS=8 ROUNDS=12 npm run simulate` to change the shape.
+room. `GUESTS=180 COLORS=6 ROUNDS=12 npm run simulate` to change the shape.
 
 ## Brand
 
 Ranna palette only — the six brand colours, tints of them, and white. No colour
 in the app comes from anywhere else.
 
-| | | |
+| Colour | Hex | Used for |
 |---|---|---|
-| Ember Dawn |  | primary accent, timers, the wheel pointer |
-| Burnt Horizon |  | warnings, disconnection |
-| Crimson Bloom |  | circle colour, progress gradient |
-| Veil of Becoming |  | circle colour, page wash |
-| Dusk Matter |  | circle colour, surfaces |
-| Abyssal Black |  | page background |
+| Ember Dawn | `#FB9203` | primary accent, timers, the wheel pointer |
+| Burnt Horizon | `#E3500A` | warnings, disconnection |
+| Crimson Bloom | `#C91B7A` | circle colour, progress gradient |
+| Veil of Becoming | `#68097D` | circle colour, page wash |
+| Dusk Matter | `#3F184D` | circle colour, surfaces |
+| Abyssal Black | `#080035` | page background |
 
 Type is **Prompt** for display (headings, clocks, numbers) and **Poppins** for
 anything that has to be read at length.
 
-**Logo:** drop the white/reversed mark at . Every page
+**Logo:** drop the white/reversed mark at `public/brand/logo.svg`. Every page
 loads it and falls back to a text wordmark if it is missing, so the app runs
 either way — but the real asset should be in before a client sees it.
 
@@ -92,7 +95,7 @@ either way — but the real asset should be in before a client sees it.
 
 The operator picks how many circles are in play and gets the first N, so a
 four-circle event gets the four that read furthest apart across a room. Dusk
-Matter and Abyssal Black are flagged : they are brand colours and
+Matter and Abyssal Black are flagged `floorRisk`: they are brand colours and
 they work, but they are dark, and a dark circle on a dark event floor is hard to
 find from across the room. The console warns when a floor plan depends on them —
 light or edge those circles.

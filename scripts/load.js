@@ -1,6 +1,6 @@
 // Realistic event load: 300 guests trickling in, 10 rounds, all polling.
-const BASE = 'http://localhost:3111';
-const PIN = '1234';
+const BASE = process.env.BASE || 'http://localhost:3000';
+const PIN = process.env.PIN || '1234';
 const N = Number(process.argv[2] || 300);
 const j=(p,o)=>fetch(BASE+p,o).then(async r=>({ok:r.ok,body:await r.json().catch(()=>null)}));
 
@@ -9,7 +9,7 @@ const j=(p,o)=>fetch(BASE+p,o).then(async r=>({ok:r.ok,body:await r.json().catch
   const admin = login.body.token;
   const A=(p,b)=>j(p,{method:b?'POST':'GET',headers:{'content-type':'application/json','x-admin-token':admin},body:b?JSON.stringify(b):undefined});
   await A('/api/admin/action',{action:'reset'});
-  await A('/api/admin/config',{colorCount:10,roundMinutes:10,huddleSize:6});
+  await A('/api/admin/config',{colorCount:6,roundMinutes:10,huddleSize:6});
 
   const tokens=[];
   const t0=Date.now();
