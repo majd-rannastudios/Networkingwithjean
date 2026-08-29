@@ -52,8 +52,9 @@ the limit. `planGroups()` picks the huddle count automatically and will never
 choose a shape that violates the rule. A 22-person circle was never a
 conversation anyway.
 
-This is also why capping the palette at six brand colours costs nothing: the
-planner compensates with more huddles per circle. Fewer colours, same result.
+This is also why the number of circles matters less than it looks: the planner
+answers fewer colours with more huddles per circle. Six circles or ten, same
+result.
 
 ### Measured
 
@@ -70,19 +71,29 @@ avg distinct people met: 52.8 | repeat pairs across the whole event: 0
 `npm run simulate` compares huddles against whole-circle matching on a synthetic
 room. `GUESTS=180 COLORS=6 ROUNDS=12 npm run simulate` to change the shape.
 
-## Brand
+## Colour: two layers, on purpose
 
-Ranna palette only — the six brand colours, tints of them, and white. No colour
-in the app comes from anywhere else.
+**The interface is Ranna.** **The circles are not.**
+
+Circle colours are wayfinding, not branding. A guest has to spot their circle
+across a dark room full of people and say its name out loud to a stranger, so
+they are plain primaries — Red, Blue, Yellow, Green, then Purple, Orange, Teal,
+Pink. Everybody already knows what blue means. They live in `src/config.js` and
+reach the browser as inline styles; nothing in `style.css` defines one.
+
+They are ordered by how far apart they read, so a four-circle event gets
+red/blue/yellow/green — the four most separable colours there are.
+
+Everything wrapped around them is brand and only brand.
 
 | Colour | Hex | Used for |
 |---|---|---|
-| Ember Dawn | `#FB9203` | primary accent, timers, the wheel pointer |
-| Burnt Horizon | `#E3500A` | warnings, disconnection |
-| Crimson Bloom | `#C91B7A` | circle colour, progress gradient |
-| Veil of Becoming | `#68097D` | circle colour, page wash |
-| Dusk Matter | `#3F184D` | circle colour, surfaces |
-| Abyssal Black | `#080035` | page background |
+| Ember Dawn | `#FB9203` | primary accent, buttons, timers, the wheel pointer |
+| Burnt Horizon | `#E3500A` | warnings, disconnection, destructive actions |
+| Crimson Bloom | `#C91B7A` | progress gradient, page wash |
+| Veil of Becoming | `#68097D` | page wash |
+| Dusk Matter | `#3F184D` | card surfaces, the wheel hub ring |
+| Abyssal Black | `#080035` | page background, text on Ember |
 
 Type is **Prompt** for display (headings, clocks, numbers) and **Poppins** for
 anything that has to be read at length.
@@ -90,15 +101,6 @@ anything that has to be read at length.
 **Logo:** drop the white/reversed mark at `public/brand/logo.svg`. Every page
 loads it and falls back to a text wordmark if it is missing, so the app runs
 either way — but the real asset should be in before a client sees it.
-
-### Circle colours are ordered by separability, not by the brand sheet
-
-The operator picks how many circles are in play and gets the first N, so a
-four-circle event gets the four that read furthest apart across a room. Dusk
-Matter and Abyssal Black are flagged `floorRisk`: they are brand colours and
-they work, but they are dark, and a dark circle on a dark event floor is hard to
-find from across the room. The console warns when a floor plan depends on them —
-light or edge those circles.
 
 ## Sound and haptics
 

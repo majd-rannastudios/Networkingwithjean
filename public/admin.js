@@ -128,21 +128,15 @@
     const max = Math.max(1, ...colors.map(c => c.count));
     $('circles').innerHTML = colors.map(c => `
       <div class="circle-row">
-        <div class="swatch${c.floorRisk ? ' rim' : ''}" style="background:${c.hex}"></div>
+        <div class="swatch" style="background:${c.hex}"></div>
         <div class="nm">${c.name}</div>
         <div class="meter"><i style="width:${(c.count / max) * 100}%;background:${c.hex}"></i></div>
         <div class="count">${c.count}</div>
       </div>`).join('');
 
-    const structure = round && round.huddlesPerColor > 1
+    $('circle-hint').textContent = round && round.huddlesPerColor > 1
       ? `Each circle splits into ${round.huddlesPerColor} conversation groups. Guests see who is in theirs.`
       : 'Everyone on a circle talks as one group.';
-    // Dusk Matter and Abyssal Black are brand colours, but they are dark, and a
-    // dark circle on a dark event floor is hard to find from across the room.
-    const risky = colors.filter(c => c.floorRisk).map(c => c.name);
-    $('circle-hint').textContent = risky.length
-      ? `${structure} Note: ${risky.join(' and ')} ${risky.length > 1 ? 'are' : 'is'} dark — make sure ${risky.length > 1 ? 'those circles are' : 'that circle is'} lit or edged on the floor, or guests will not spot ${risky.length > 1 ? 'them' : 'it'}.`
-      : structure;
 
     // Health readout — the thing an operator actually needs to trust
     const health = $('health');

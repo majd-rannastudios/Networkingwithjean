@@ -1,24 +1,26 @@
-// The Ranna palette, and nothing else.
+// Circle colours.
 //
-// Ordered by how far apart they read across a room, not by the order they sit
-// on the brand sheet: the operator picks how many circles are in play and gets
-// the first N, so a four-circle event gets the four most separable.
+// These are deliberately NOT the Ranna palette. They are wayfinding, not
+// branding: a guest has to spot their circle across a dark room full of people
+// and say the name out loud to a stranger. That wants plain, primary, unarguable
+// colours - everybody already knows what blue means, and nobody has to be told
+// which circle is "Veil of Becoming". The app around them carries the brand.
 //
-// `floorRisk` marks the two that are hard to find on a dark event carpet under
-// coloured uplighting. They still work - they are brand colours and they are in
-// the set - but the console warns when a floor plan depends on them, because a
-// guest who cannot spot their circle from across the room is a guest standing
-// still.
+// Ordered by how far apart they read: the operator picks how many circles are in
+// play and gets the first N, so a four-circle event gets red/blue/yellow/green -
+// the four most separable colours there are.
 export const PALETTE = [
-  { id: 'ember',   name: 'Ember Dawn',       hex: '#FB9203', ink: '#080035' },
-  { id: 'crimson', name: 'Crimson Bloom',    hex: '#C91B7A', ink: '#FFFFFF' },
-  { id: 'veil',    name: 'Veil of Becoming', hex: '#68097D', ink: '#FFFFFF' },
-  { id: 'burnt',   name: 'Burnt Horizon',    hex: '#E3500A', ink: '#FFFFFF' },
-  { id: 'dusk',    name: 'Dusk Matter',      hex: '#3F184D', ink: '#FFFFFF', floorRisk: true },
-  { id: 'abyss',   name: 'Abyssal Black',    hex: '#080035', ink: '#FFFFFF', floorRisk: true }
+  { id: 'red',    name: 'Red',    hex: '#E02B20', ink: '#FFFFFF' },
+  { id: 'blue',   name: 'Blue',   hex: '#1F7FD4', ink: '#FFFFFF' },
+  { id: 'yellow', name: 'Yellow', hex: '#FFC613', ink: '#2A1F00' },
+  { id: 'green',  name: 'Green',  hex: '#3FAE49', ink: '#FFFFFF' },
+  { id: 'purple', name: 'Purple', hex: '#8B44AD', ink: '#FFFFFF' },
+  { id: 'orange', name: 'Orange', hex: '#F5821F', ink: '#2A1400' },
+  { id: 'teal',   name: 'Teal',   hex: '#00A79D', ink: '#FFFFFF' },
+  { id: 'pink',   name: 'Pink',   hex: '#EC4899', ink: '#FFFFFF' }
 ];
 
-export const DEFAULT_COLOR_COUNT = 4;
+export const DEFAULT_COLOR_COUNT = 6;
 export const DEFAULT_ROUND_MINUTES = 10;
 
 // Icebreakers. Each circle gets a different one each round, so nobody is asked

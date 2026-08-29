@@ -1,12 +1,18 @@
 /* Ranna Studios — Spin The Wheel: Colors
  *
- * Brand palette only. Every value below is one of the six Ranna colours, a
- * tint of one over the background, or plain white. The tint steps mirror the
- * 20/40/60/80% ramps on the brand sheet.
+ * THE INTERFACE is Ranna, and only Ranna. Every value below is one of the six
+ * brand colours, a tint of one over the background, or plain white. The tint
+ * steps mirror the 20/40/60/80% ramps on the brand sheet.
  *
  *   Ember Dawn        #FB9203     Veil of Becoming  #68097D
  *   Burnt Horizon     #E3500A     Dusk Matter       #3F184D
  *   Crimson Bloom     #C91B7A     Abyssal Black     #080035
+ *
+ * THE CIRCLE COLOURS are not, deliberately. They live in src/config.js and are
+ * plain primaries — red, blue, yellow, green - because they are wayfinding, not
+ * branding: a guest has to spot their circle across a dark room and say its
+ * name to a stranger. They arrive as inline styles from the server, so nothing
+ * in this file should ever try to define one.
  *
  * Type: Prompt for display, Poppins for everything that has to be read.
  */
@@ -251,8 +257,6 @@ label {
   box-shadow: var(--shadow);
   animation: pop 0.5s cubic-bezier(0.2, 1.2, 0.3, 1) both;
 }
-/* The two darkest brand colours need an edge or they vanish into the page. */
-.result-color.needs-edge { box-shadow: var(--shadow), inset 0 0 0 2px rgba(255, 255, 255, 0.28); }
 
 @keyframes pop {
   from { opacity: 0; transform: scale(0.9); }

@@ -24,7 +24,7 @@
 
     $('circles').innerHTML = colors.map(c => `
       <div class="c">
-        <div class="dot${c.floorRisk ? ' rim' : ''}" style="background:${c.hex}"></div>
+        <div class="dot" style="background:${c.hex}"></div>
         <div class="nm">${c.name}</div>
         <div class="n">${c.count}</div>
       </div>`).join('');

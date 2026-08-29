@@ -169,9 +169,6 @@
     const card = $('result-color');
     card.style.background = a.color.hex;
     card.style.color = a.color.ink;
-    // Dusk Matter and Abyssal Black are close enough to the page that the card
-    // would lose its edge without a rim.
-    card.classList.toggle('needs-edge', !!a.color.floorRisk);
     $('result-name').textContent = a.color.name;
     $('result-huddle').textContent = a.huddleCount > 1
       ? `circle · group ${a.huddleNumber} of ${a.huddleCount}`
