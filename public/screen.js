@@ -22,18 +22,18 @@
       $('round').textContent = `Round ${event.roundIndex}`;
     }
 
-    const max = Math.max(1, ...colors.map(c => c.count));
     $('circles').innerHTML = colors.map(c => `
       <div class="c">
-        <div class="dot" style="background:${c.hex}"></div>
+        <div class="dot${c.floorRisk ? ' rim' : ''}" style="background:${c.hex}"></div>
         <div class="nm">${c.name}</div>
         <div class="n">${c.count}</div>
       </div>`).join('');
 
-    // New round: flash the room.
+    // New round: flash the room and sound the chime through the house system.
     if (event.roundIndex !== lastRound && lastRound !== 0 && live) {
       const move = $('move');
       move.classList.add('on');
+      window.Sound?.rotate();
       setTimeout(() => move.classList.remove('on'), 7000);
     }
     lastRound = event.roundIndex;
@@ -70,6 +70,14 @@
     };
     socket.onclose = () => setTimeout(connect, 3000);
   }
+
+  // Browsers will not play audio until someone interacts with the page, so the
+  // operator arms it once when they put the screen up.
+  $('arm').addEventListener('click', () => {
+    window.Sound?.unlock();
+    window.Sound?.tick();
+    $('arm').classList.add('off');
+  }, { once: true });
 
   fetch('/api/screen').then(r => r.json()).then(render);
   fetch('/api/qr').then(r => r.json()).then(({ dataUrl }) => { $('qr').src = dataUrl; });

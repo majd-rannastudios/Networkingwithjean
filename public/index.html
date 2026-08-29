@@ -3,20 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<meta name="theme-color" content="#0E0E10">
+<meta name="theme-color" content="#080035">
 <title>Spin The Wheel — Colors</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
 <div class="wrap">
 
+  <!-- persistent chrome: logo and sound live above the screens, not inside them -->
+  <div class="topbar">
+    <div class="brand-logo">
+      <img src="/brand/logo.svg" alt="Ranna Studios"
+           onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'wordmark',innerHTML:'<b>Ranna</b> Studios'}))">
+    </div>
+    <button class="sound-btn" id="sound-btn" type="button">♪ Sound on</button>
+  </div>
+
   <!-- 1. join -->
   <section class="screen on" id="screen-join">
-    <div class="brand">Ranna Studios</div>
     <h1 class="hero-title">Spin The Wheel<span>Colors</span></h1>
     <p class="hero-sub">Spin for a colour, walk to that circle, and meet the people waiting there. New colour every few minutes.</p>
 
@@ -40,7 +48,6 @@
 
   <!-- 2. wheel -->
   <section class="screen" id="screen-wheel">
-    <div class="brand">Ranna Studios</div>
     <div class="wheel-stage">
       <div class="eyebrow" id="wheel-eyebrow">Round 1</div>
       <div class="wheel-holder">
@@ -55,11 +62,9 @@
 
   <!-- 3. result -->
   <section class="screen" id="screen-result">
-    <div class="brand">Ranna Studios</div>
-
     <div class="result-color" id="result-color">
       <div class="result-label">Go to the</div>
-      <div class="result-name" id="result-name">Orange</div>
+      <div class="result-name" id="result-name">Ember Dawn</div>
       <div class="result-huddle" id="result-huddle">circle</div>
     </div>
 
@@ -72,7 +77,7 @@
     </div>
     <div class="bar"><i id="bar" style="width:100%"></i></div>
 
-    <div class="question" id="question">Loading…</div>
+    <div class="question" id="question"></div>
 
     <div id="people-block">
       <div class="eyebrow" style="margin-top:20px">Your group</div>
@@ -89,7 +94,6 @@
 
   <!-- 4. waiting / ended -->
   <section class="screen" id="screen-wait">
-    <div class="brand">Ranna Studios</div>
     <div class="wheel-stage">
       <h2 id="wait-title" style="font-size:30px">You are in</h2>
       <p class="muted center" id="wait-text" style="max-width:26ch">Hold tight — the first spin starts when the host kicks things off.</p>
@@ -111,6 +115,7 @@
 
 <div class="offline" id="offline">Reconnecting…</div>
 
+<script src="/sound.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

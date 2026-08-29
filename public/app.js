@@ -25,12 +25,24 @@
     for (const [key, el] of Object.entries(screens)) el.classList.toggle('on', key === name);
   };
 
-  const buzz = pattern => { try { navigator.vibrate?.(pattern); } catch {} };
+  const sound = window.Sound;
+
+  // Sound toggle, shown on every screen.
+  const paintSoundBtn = () => {
+    const btn = $('sound-btn');
+    btn.classList.toggle('on', sound.enabled);
+    btn.textContent = sound.enabled ? '♪ Sound on' : '♪ Sound off';
+  };
+  $('sound-btn').addEventListener('click', () => { sound.toggle(); paintSoundBtn(); });
+  paintSoundBtn();
 
   // --- join ---------------------------------------------------------------
 
   $('join-form').addEventListener('submit', async e => {
     e.preventDefault();
+    // First real gesture of the session - the only moment a browser will let
+    // us open an audio context.
+    sound.unlock();
     const btn = $('join-btn');
     btn.disabled = true;
     btn.textContent = 'Joining…';
@@ -77,6 +89,9 @@
 
   function spinTo(colorIndex, colorCount, onDone) {
     const wheel = $('wheel');
+    // Clear any ticks still queued from a previous spin.
+    (spinTo._ticks || []).forEach(clearTimeout);
+    spinTo._ticks = [];
     const step = 360 / colorCount;
     // Land the chosen segment under the pointer, plus a few full turns, plus a
     // little jitter so two people spinning side by side do not look scripted.
@@ -88,11 +103,21 @@
 
     wheel.classList.add('spinning');
     requestAnimationFrame(() => { wheel.style.transform = `rotate(${rotation}deg)`; });
-    buzz(18);
+    sound.spin();
 
+    // Ticks thinning out as the wheel slows, so the ear hears it decelerate
+    // alongside the easing curve.
     clearTimeout(spinTo._t);
+    let at = 120;
+    let gap = 90;
+    while (at < 4300) {
+      spinTo._ticks.push(setTimeout(() => sound.tick(), at));
+      at += gap;
+      gap *= 1.14;
+    }
+
     spinTo._t = setTimeout(() => {
-      buzz([0, 40, 60, 90]);
+      sound.land();
       onDone();
     }, 4700);
   }
@@ -144,6 +169,9 @@
     const card = $('result-color');
     card.style.background = a.color.hex;
     card.style.color = a.color.ink;
+    // Dusk Matter and Abyssal Black are close enough to the page that the card
+    // would lose its edge without a rim.
+    card.classList.toggle('needs-edge', !!a.color.floorRisk);
     $('result-name').textContent = a.color.name;
     $('result-huddle').textContent = a.huddleCount > 1
       ? `circle · group ${a.huddleNumber} of ${a.huddleCount}`
@@ -213,6 +241,7 @@
 
     if (view.event.status === 'ended') {
       clearInterval(ticker);
+      if (previous && previous.event.status !== 'ended') sound.finish();
       $('wait-title').textContent = 'That is a wrap';
       $('wait-text').textContent = `You met ${view.metCount} people across ${view.me.rounds} rounds. Nicely done.`;
       $('wait-met').textContent = view.metCount;
@@ -242,7 +271,7 @@
       // A brand new round while the guest was already playing: interrupt them.
       const midEvent = previous?.assignment && previous.event.roundIndex !== view.event.roundIndex;
       if (midEvent && !firstLoad) {
-        buzz([0, 120, 80, 120, 80, 200]);
+        sound.rotate();
         $('overlay').classList.add('on');
       } else {
         prepareSpin();

@@ -67,6 +67,56 @@ avg distinct people met: 50.0 | repeat pairs across the whole event: 0
 `npm run simulate` compares huddles against whole-circle matching on a synthetic
 room. `GUESTS=180 COLORS=8 ROUNDS=12 npm run simulate` to change the shape.
 
+## Brand
+
+Ranna palette only — the six brand colours, tints of them, and white. No colour
+in the app comes from anywhere else.
+
+| | | |
+|---|---|---|
+| Ember Dawn |  | primary accent, timers, the wheel pointer |
+| Burnt Horizon |  | warnings, disconnection |
+| Crimson Bloom |  | circle colour, progress gradient |
+| Veil of Becoming |  | circle colour, page wash |
+| Dusk Matter |  | circle colour, surfaces |
+| Abyssal Black |  | page background |
+
+Type is **Prompt** for display (headings, clocks, numbers) and **Poppins** for
+anything that has to be read at length.
+
+**Logo:** drop the white/reversed mark at . Every page
+loads it and falls back to a text wordmark if it is missing, so the app runs
+either way — but the real asset should be in before a client sees it.
+
+### Circle colours are ordered by separability, not by the brand sheet
+
+The operator picks how many circles are in play and gets the first N, so a
+four-circle event gets the four that read furthest apart across a room. Dusk
+Matter and Abyssal Black are flagged : they are brand colours and
+they work, but they are dark, and a dark circle on a dark event floor is hard to
+find from across the room. The console warns when a floor plan depends on them —
+light or edge those circles.
+
+## Sound and haptics
+
+Every sound is synthesised with the Web Audio API. Nothing to download over
+venue wifi, nothing to cache, no delay at the moment it matters.
+
+| Cue | Sound | Vibration |
+|---|---|---|
+| Wheel spins | rising sweep, ticks thinning out as it slows | short pulse |
+| Wheel lands | major arpeggio | double pulse |
+| **Rotation** | two rising two-note calls over a low tone | long insistent pattern |
+| Event ends | falling three-note resolve | soft double |
+
+Guests get a sound toggle in the header; the choice is remembered. The projector
+view arms the same rotation chime with one click, so it can carry through the
+house speakers — which is louder and better than three hundred phone speakers,
+though both firing together is its own moment.
+
+Browsers refuse audio before a user gesture, so the context is unlocked on the
+join tap (guests) and the arm-screen tap (projector).
+
 ## Operating it
 
 Start the event from `/admin` once the room has filled a little. The console
