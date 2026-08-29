@@ -15,7 +15,19 @@ const ADMIN_PIN = process.env.ADMIN_PIN || '1234';
 
 const app = express();
 app.use(express.json({ limit: '64kb' }));
-app.use(express.static(path.join(__dirname, '..', 'public'), { maxAge: '1h' }));
+// Static files revalidate rather than sit in a browser cache for an hour.
+// `no-cache` does not mean "do not store" - the file is still cached, the
+// browser just asks "changed?" first and gets a 304 when it has not. That costs
+// a few bytes and buys the ability to push a fix mid-event and have every phone
+// in the room pick it up on the next load. Brand art never changes, so it keeps
+// a real cache lifetime.
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  etag: true,
+  setHeaders(res, filePath) {
+    const longLived = /[\\/]brand[\\/]/.test(filePath);
+    res.setHeader('Cache-Control', longLived ? 'public, max-age=86400' : 'no-cache');
+  }
+}));
 
 // --- guest API -------------------------------------------------------------
 

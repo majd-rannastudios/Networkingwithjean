@@ -354,18 +354,24 @@ label {
 
 .notice { margin-top: auto; font-size: 13px; color: var(--faint); text-align: center; padding-top: 18px; }
 
-/* Sits under every screen, matching the note above it in font and size. */
-.site-foot { padding-top: 20px; text-align: center; }
+/* Centred under every screen. Ember, but held back to about two thirds so it
+   reads as a signature at the foot of the page rather than a call to action. */
+.site-foot {
+  padding: 26px 0 2px;
+  text-align: center;
+}
 .site-foot a {
+  display: inline-block;
   font-family: var(--font);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12.5px;
+  font-weight: 400;
   color: var(--ember);
+  opacity: 0.7;
   text-decoration: none;
   transition: opacity 0.18s ease;
 }
 .site-foot a:hover,
-.site-foot a:active { opacity: 0.72; }
+.site-foot a:active { opacity: 1; }
 
 .offline {
   position: fixed;
