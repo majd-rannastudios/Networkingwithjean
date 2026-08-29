@@ -13,7 +13,7 @@
   body { overflow: hidden; }
   .stage { height: 100vh; display: grid; grid-template-rows: auto 1fr auto; padding: 4vh 5vw; gap: 3vh; }
   .top { display: flex; align-items: center; justify-content: space-between; }
-  .top .brand-logo { height: 3.4vh; }
+  .top .brand-logo { height: 5.2vh; }
   .top .brand-logo .wordmark { font-size: 1.3vw; }
   .round { font-family: var(--display); font-size: 1.6vw; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ember); }
   .middle { display: grid; grid-template-columns: 1.05fr 1fr; gap: 5vw; align-items: center; }
@@ -26,11 +26,13 @@
   .c .nm { font-family: var(--display); font-size: 1.9vw; font-weight: 600; flex: 1; }
   .c .n { font-family: var(--display); font-size: 2.1vw; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); }
   .bottom { display: flex; align-items: center; justify-content: space-between; gap: 3vw; }
+  .bottom .right { display: flex; align-items: center; gap: 2.2vw; }
   .join { display: flex; align-items: center; gap: 1.6vw; }
   .join img.qr { width: 11vh; height: 11vh; border-radius: 1vh; background: #fff; padding: 0.6vh; }
   .join div { font-size: 1.3vw; color: var(--muted); max-width: 22ch; line-height: 1.4; }
   .count { font-size: 1.4vw; color: var(--muted); }
   .count b { font-family: var(--display); color: var(--text); font-size: 2.4vw; font-weight: 700; }
+  .site-link { font-family: var(--display); font-size: 1.1vw; letter-spacing: 0.24em; color: var(--faint); text-decoration: none; }
   .move { position: fixed; inset: 0; background: var(--ember); color: var(--abyss); display: none; place-items: center; text-align: center; z-index: 10; }
   .move.on { display: grid; animation: flash 0.5s ease both; }
   .move h1 { font-size: 11vw; letter-spacing: -0.03em; }
@@ -55,7 +57,7 @@
 <div class="stage" id="stage">
   <div class="top">
     <div class="brand-logo">
-      <img src="/brand/logo.svg" alt="Ranna Studios"
+      <img src="/brand/logo.png" alt="Ranna Studios"
            onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'wordmark',innerHTML:'ranna<b>studios</b>'}))">
     </div>
     <div class="round" id="round">Spin The Wheel — Colors</div>
@@ -81,7 +83,10 @@
       <img class="qr" id="qr" alt="">
       <div>Scan to join — spin for your colour and find your circle.</div>
     </div>
-    <div class="count"><b id="guests">0</b> guests in the room</div>
+    <div class="right">
+      <div class="count"><b id="guests">0</b> guests in the room</div>
+      <a class="site-link" href="https://rannastudios.com" target="_blank" rel="noopener">rannastudios.com</a>
+    </div>
   </div>
 </div>
 

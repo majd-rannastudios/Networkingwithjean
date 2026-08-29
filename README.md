@@ -98,9 +98,12 @@ Everything wrapped around them is brand and only brand.
 Type is **Prompt** for display (headings, clocks, numbers) and **Poppins** for
 anything that has to be read at length.
 
-**Logo:** drop the white/reversed mark at `public/brand/logo.svg`. Every page
-loads it and falls back to a text wordmark if it is missing, so the app runs
-either way — but the real asset should be in before a client sees it.
+**Logo:** `public/brand/logo.png` — the white/reversed Ranna lockup, cropped to
+its artwork from the 4500² source (uncropped, the transparent padding shrinks it
+to a speck). Every page falls back to a text wordmark if the file goes missing.
+See `public/brand/README.md` to swap it.
+
+**Website:** `rannastudios.com` sits quietly at the foot of all three pages.
 
 ## Sound and haptics
 
