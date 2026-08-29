@@ -146,14 +146,14 @@ Project `spin-the-wheel-colors`, production environment, two services:
 
 | Service | What |
 |---|---|
-| `app` | this repo, exposed at the public domain |
+| `app` | this repo, served at `networking.rannastudios.com` |
 | `Postgres` | `postgres:16-alpine` on a persistent volume at `/var/lib/postgresql/data` |
 
 Variables already set on `app`:
 
 - `DATABASE_URL` — points at Postgres over Railway's private network
 - `ADMIN_PIN` — the operator console PIN
-- `PUBLIC_URL` — the domain the QR code encodes
+- `PUBLIC_URL` — the domain the QR code encodes (`https://networking.rannastudios.com`)
 - `NODE_ENV=production`
 
 `/health` reports which store won, so a deploy that quietly fell back to file
